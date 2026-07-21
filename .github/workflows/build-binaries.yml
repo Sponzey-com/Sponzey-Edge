@@ -1,0 +1,65 @@
+name: Build Binaries
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.artifact_name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: edge-proxy-linux-x86_64
+            binary_name: edge-proxy
+            binary_path: target/release/edge-proxy
+          - os: macos-latest
+            artifact_name: edge-proxy-macos
+            binary_name: edge-proxy
+            binary_path: target/release/edge-proxy
+          - os: windows-latest
+            artifact_name: edge-proxy-windows-x86_64
+            binary_name: edge-proxy.exe
+            binary_path: target/release/edge-proxy.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ matrix.artifact_name }}
+
+      - name: Build release binary
+        run: cargo build --release -p edge-proxy
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp "${{ matrix.binary_path }}" "dist/${{ matrix.binary_name }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.binary_name }}
+          if-no-files-found: error
