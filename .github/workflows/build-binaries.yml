@@ -27,14 +27,20 @@ jobs:
             artifact_name: edge-proxy-linux-x86_64
             binary_name: edge-proxy
             binary_path: target/release/edge-proxy
+            package_name: edge-proxy-linux-x86_64.tar.gz
+            package_command: tar -czf dist/edge-proxy-linux-x86_64.tar.gz -C dist edge-proxy
           - os: macos-latest
             artifact_name: edge-proxy-macos
             binary_name: edge-proxy
             binary_path: target/release/edge-proxy
+            package_name: edge-proxy-macos.tar.gz
+            package_command: tar -czf dist/edge-proxy-macos.tar.gz -C dist edge-proxy
           - os: windows-latest
             artifact_name: edge-proxy-windows-x86_64
             binary_name: edge-proxy.exe
             binary_path: target/release/edge-proxy.exe
+            package_name: edge-proxy-windows-x86_64.zip
+            package_command: 7z a dist/edge-proxy-windows-x86_64.zip ./dist/edge-proxy.exe
 
     steps:
       - name: Checkout
@@ -51,15 +57,55 @@ jobs:
       - name: Build release binary
         run: cargo build --release -p edge-proxy
 
-      - name: Prepare artifact
+      - name: Package artifact
         shell: bash
         run: |
           mkdir -p dist
           cp "${{ matrix.binary_path }}" "dist/${{ matrix.binary_name }}"
+          ${{ matrix.package_command }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.binary_name }}
+          path: dist/${{ matrix.package_name }}
           if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check release tag
+        id: release_tag
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if [[ "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "publish=true" >> "${GITHUB_OUTPUT}"
+            echo "Release tag accepted: ${tag}"
+          else
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            echo "Release tag skipped: ${tag}"
+          fi
+
+      - name: Download build artifacts
+        if: steps.release_tag.outputs.publish == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        if: steps.release_tag.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Sponzey Edge ${{ github.ref_name }}
+          files: release-assets/*
+          fail_on_unmatched_files: true
