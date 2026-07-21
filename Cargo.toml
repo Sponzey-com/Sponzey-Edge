@@ -14,7 +14,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-license = "Apache-2.0"
+license = "MIT"
 repository = "https://example.invalid/sponzey-edge-proxy"
 rust-version = "1.80"
 
