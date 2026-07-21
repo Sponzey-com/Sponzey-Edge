@@ -1,0 +1,12 @@
+.git
+.tasks
+artifacts
+target
+**/*.log
+AGENTS.md
+PROJECT.md
+README.md
+RESEARCH.md
+docker-compose.yml
+docs
+scripts

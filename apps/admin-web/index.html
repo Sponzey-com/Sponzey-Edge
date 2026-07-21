@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sponzey Edge Admin</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">SE</span>
+          <span>Sponzey Edge</span>
+        </div>
+        <nav class="nav-tabs" aria-label="Admin sections">
+          <button class="nav-tab active" type="button" data-panel="dashboard">Dashboard</button>
+          <button class="nav-tab" type="button" data-panel="proxy-hosts">Proxy Hosts</button>
+          <button class="nav-tab" type="button" data-panel="config">Config</button>
+          <button class="nav-tab" type="button" data-panel="certificates">Certificates</button>
+          <button class="nav-tab" type="button" data-panel="trust-tls">Trust &amp; TLS</button>
+          <button class="nav-tab" type="button" data-panel="logs">Logs</button>
+          <button class="nav-tab" type="button" data-panel="audit">Audit</button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <h1>Admin Console</h1>
+            <p id="revisionLabel">revision: unknown</p>
+          </div>
+          <div class="topbar-actions">
+            <span id="modeLabel" class="mode-label connecting">connecting</span>
+            <button id="refreshBtn" type="button">Refresh</button>
+            <button id="retryApiBtn" type="button">Retry API</button>
+            <button id="logoutBtn" type="button" hidden>Logout</button>
+          </div>
+        </header>
+
+        <div id="fallbackBanner" class="notice warning" hidden>
+          UI smoke only. No runtime config, proxy host, certificate, or log state is applied.
+        </div>
+
+        <div id="apiError" class="notice error" hidden></div>
+        <div id="resultMessage" class="notice success" hidden></div>
+        <div id="restartRequiredNotice" class="notice warning" hidden>
+          Desired configuration is saved but not active. Restart the proxy to activate it.
+        </div>
+
+        <section id="authPanel" class="auth-band" hidden>
+          <form id="loginForm" class="auth-card" autocomplete="off">
+            <h2>Admin Login</h2>
+            <label>
+              Password hash
+              <input id="loginPasswordHash" name="password_hash" type="password" required />
+            </label>
+            <button type="submit" class="primary">Login</button>
+          </form>
+
+          <form id="setupForm" class="auth-card" autocomplete="off" hidden>
+            <h2>Initial Setup</h2>
+            <label>
+              Password hash
+              <input id="setupPasswordHash" name="password_hash" type="password" required />
+            </label>
+            <button type="submit" class="primary">Save Setup</button>
+          </form>
+        </section>
+
+        <section id="dashboard" class="panel active">
+          <div class="metrics-grid" aria-label="Runtime status">
+            <div class="metric">
+              <span class="metric-label">Routes</span>
+              <strong id="routeCount">0</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Services</span>
+              <strong id="serviceCount">0</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Certificates</span>
+              <strong id="certCount">0</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Health</span>
+              <strong id="healthState">unknown</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Metrics</span>
+              <strong id="metricsReady">unknown</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Metric generation</span>
+              <strong id="metricsGeneration">0 / 0</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Metric drops</span>
+              <strong id="metricsDrops">0</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Active resources</span>
+              <strong id="activeResourcePolicy">0 conn / 0 MiB</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Desired resources</span>
+              <strong id="desiredResourcePolicy">0 conn / 0 MiB</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Live resources</span>
+              <strong id="liveResourceStatus">unavailable</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Live source revision</span>
+              <strong id="liveResourceRevision">unavailable</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Activation</span>
+              <strong id="resourceActivationState">unknown</strong>
+            </div>
+            <div class="metric">
+              <span class="metric-label">CSRF</span>
+              <strong id="csrfState">none</strong>
+            </div>
+          </div>
+        </section>
+
+        <section id="proxy-hosts" class="panel">
+          <div class="split">
+            <form id="proxyForm" class="editor" autocomplete="off">
+              <div class="form-heading">
+                <h2>Proxy Host</h2>
+                <span id="hostFormMode">new host</span>
+              </div>
+              <label>
+                ID
+                <input id="hostId" name="id" placeholder="app" required />
+              </label>
+              <label>
+                Name
+                <input id="hostName" name="name" placeholder="App" />
+              </label>
+              <label>
+                Domain
+                <input id="hostDomain" name="domain" placeholder="app.example.com" required />
+              </label>
+              <label>
+                Path prefix
+                <input id="pathPrefix" name="pathPrefix" value="/" required />
+              </label>
+              <fieldset class="form-section">
+                <div class="form-section-heading">
+                  <legend>Upstreams</legend>
+                  <button id="addUpstreamBtn" type="button" title="Add upstream">+</button>
+                </div>
+                <div id="upstreamRows" class="upstream-rows"></div>
+              </fieldset>
+              <fieldset class="form-section">
+                <div class="form-section-heading">
+                  <legend>Failure handling</legend>
+                </div>
+                <div class="health-grid">
+                  <label class="compact-toggle"><input id="retryEnabled" type="checkbox" /> Safe retry</label>
+                  <label>Replay bytes <input id="retryReplayBytes" type="number" min="0" max="1048576" value="32768" /></label>
+                  <label class="compact-toggle"><input id="passiveHealthEnabled" type="checkbox" /> Passive health</label>
+                  <label>Failure threshold <input id="passiveFailureThreshold" type="number" min="1" max="10" value="3" /></label>
+                  <label>Ejection ms <input id="passiveEjectionMs" type="number" min="1000" max="86400000" value="30000" /></label>
+                </div>
+              </fieldset>
+              <fieldset class="form-section">
+                <div class="form-section-heading">
+                  <legend>Health check</legend>
+                  <label class="compact-toggle">
+                    <input id="healthCheckEnabled" type="checkbox" /> Enabled
+                  </label>
+                </div>
+                <div id="healthCheckFields" class="health-grid" hidden>
+                  <label>Path <input id="healthPath" value="/health" /></label>
+                  <label>Interval ms <input id="healthInterval" type="number" min="1000" max="300000" value="10000" /></label>
+                  <label>Timeout ms <input id="healthTimeout" type="number" min="100" max="30000" value="2000" /></label>
+                  <label>Healthy threshold <input id="healthyThreshold" type="number" min="1" max="10" value="2" /></label>
+                  <label>Unhealthy threshold <input id="unhealthyThreshold" type="number" min="1" max="10" value="3" /></label>
+                  <label>Status min <input id="healthStatusMin" type="number" min="100" max="599" value="200" /></label>
+                  <label>Status max <input id="healthStatusMax" type="number" min="100" max="599" value="399" /></label>
+                </div>
+              </fieldset>
+              <div class="toggle-row">
+                <label><input id="httpsEnabled" type="checkbox" /> HTTPS</label>
+                <label><input id="redirectEnabled" type="checkbox" /> Redirect</label>
+                <label><input id="hostEnabled" type="checkbox" checked /> Enabled</label>
+              </div>
+              <div class="button-row">
+                <button type="submit" class="primary">Save</button>
+                <button id="newHostBtn" type="button">New</button>
+              </div>
+            </form>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Domain</th>
+                    <th>Path</th>
+                    <th>Upstream</th>
+                    <th>Operational health</th>
+                    <th>State</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="hostRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="config" class="panel">
+          <div class="config-layout">
+            <div class="editor">
+              <div class="form-heading">
+                <h2>Current Config</h2>
+                <span id="configRevision">none</span>
+              </div>
+              <textarea id="configEditor" spellcheck="false"></textarea>
+              <div class="button-row">
+                <button id="validateBtn" type="button">Validate</button>
+                <button id="diffBtn" type="button">Diff</button>
+                <button id="applyBtn" type="button" class="primary">Apply</button>
+              </div>
+              <div class="rollback-row">
+                <input id="rollbackRevision" name="revision_id" placeholder="revision id" />
+                <button id="rollbackBtn" type="button">Rollback</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Result</th>
+                    <th>Value</th>
+                    <th>Hint</th>
+                  </tr>
+                </thead>
+                <tbody id="diffRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="certificates" class="panel">
+          <div class="certificate-layout">
+            <form id="certificateImportForm" class="editor" autocomplete="off">
+              <div class="form-heading">
+                <h2>Import Certificate</h2>
+                <span id="certificateImportState">ready</span>
+              </div>
+              <label>
+                Reference
+                <input id="certificateRef" name="certificate_ref" placeholder="proxy-host-app" required />
+              </label>
+              <label>
+                Domains
+                <input id="certificateDomains" name="domains" placeholder="app.example.com" required />
+              </label>
+              <label>
+                Full chain PEM
+                <textarea id="certificateFullchain" name="fullchain_pem" spellcheck="false" required></textarea>
+              </label>
+              <label>
+                Private key PEM
+                <textarea id="certificatePrivateKey" name="private_key_pem" spellcheck="false" required></textarea>
+              </label>
+              <div class="button-row">
+                <button id="certificateImportBtn" type="submit" class="primary">Import</button>
+              </div>
+            </form>
+            <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Reference</th>
+                  <th>Domains</th>
+                  <th>Source</th>
+                  <th>State</th>
+                  <th>Expires</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="certRows"></tbody>
+            </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="trust-tls" class="panel">
+          <div class="certificate-layout">
+            <form id="trustBundleImportForm" class="editor" autocomplete="off">
+              <div class="form-heading">
+                <h2>Import Trust Bundle</h2>
+                <span id="trustBundleImportState">ready</span>
+              </div>
+              <label>
+                Reference
+                <input id="trustBundleRef" name="trust_bundle_ref" placeholder="private-root" required />
+              </label>
+              <label>
+                Root certificates PEM
+                <textarea id="trustBundlePem" name="encoded_material" spellcheck="false" required></textarea>
+              </label>
+              <div class="button-row">
+                <button id="trustBundleImportBtn" type="submit" class="primary">Import</button>
+                <button id="openTlsConfigBtn" type="button">TLS Config</button>
+              </div>
+            </form>
+            <div class="table-wrap">
+              <div class="table-heading">
+                <strong>Managed Roots</strong>
+                <span id="trustConfigRevision">revision: none</span>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Reference</th>
+                    <th>Certificates</th>
+                    <th>Imported</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="trustBundleRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="logs" class="panel">
+          <div class="log-grid">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Request</th>
+                    <th>Revision</th>
+                    <th>Route</th>
+                    <th>Upstream</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody id="accessLogRows"></tbody>
+              </table>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Request</th>
+                    <th>Error</th>
+                    <th>Message</th>
+                  </tr>
+                </thead>
+                <tbody id="errorLogRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="audit" class="panel">
+          <form id="auditFilterForm" class="audit-filters" autocomplete="off">
+            <label>
+              Action
+              <select id="auditAction">
+                <option value="">All actions</option>
+                <option value="config.apply">Config apply</option>
+                <option value="config.rollback">Config rollback</option>
+                <option value="proxy_host.create">Proxy host create</option>
+                <option value="proxy_host.update">Proxy host update</option>
+                <option value="proxy_host.delete">Proxy host delete</option>
+                <option value="certificate.issue">Certificate issue</option>
+                <option value="certificate.renew">Certificate renew</option>
+                <option value="certificate.import">Certificate import</option>
+                <option value="trust_bundle.import">Trust bundle import</option>
+                <option value="trust_bundle.delete">Trust bundle delete</option>
+                <option value="admin.setup">Admin setup</option>
+                <option value="admin.login.success">Admin login</option>
+                <option value="admin.logout">Admin logout</option>
+                <option value="admin.lockout">Admin lockout</option>
+              </select>
+            </label>
+            <label>
+              Outcome
+              <select id="auditOutcome">
+                <option value="">All outcomes</option>
+                <option value="succeeded">Succeeded</option>
+                <option value="failed">Failed</option>
+                <option value="observed">Observed</option>
+                <option value="reconciled_committed">Reconciled committed</option>
+                <option value="reconciled_not_committed">Reconciled not committed</option>
+                <option value="reconciliation_unknown">Reconciliation unknown</option>
+              </select>
+            </label>
+            <label>
+              Target type
+              <select id="auditTargetKind">
+                <option value="">All targets</option>
+                <option value="config_revision">Config revision</option>
+                <option value="proxy_host">Proxy host</option>
+                <option value="certificate">Certificate</option>
+                <option value="trust_bundle">Trust bundle</option>
+                <option value="admin_account">Admin account</option>
+                <option value="restore">Restore</option>
+                <option value="audit_ledger">Audit ledger</option>
+              </select>
+            </label>
+            <label>
+              From
+              <input id="auditFrom" type="datetime-local" />
+            </label>
+            <label>
+              To
+              <input id="auditTo" type="datetime-local" />
+            </label>
+            <label>
+              Page size
+              <select id="auditLimit">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+            <div class="audit-filter-actions">
+              <button type="submit" class="primary">Apply</button>
+              <button id="auditResetBtn" type="button">Reset</button>
+            </div>
+          </form>
+
+          <div class="audit-status-band">
+            <span id="auditState" class="audit-state">idle</span>
+            <span id="auditHead">generation 0, sequence 0</span>
+            <button id="auditRetryBtn" type="button" hidden>Retry</button>
+          </div>
+
+          <div class="table-wrap audit-table-wrap">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Action</th>
+                  <th>Target</th>
+                  <th>Outcome</th>
+                  <th>Actor</th>
+                  <th>Request</th>
+                  <th>Sequence</th>
+                </tr>
+              </thead>
+              <tbody id="auditRows"></tbody>
+            </table>
+          </div>
+
+          <div class="audit-pagination">
+            <button id="auditPreviousBtn" type="button" disabled>Previous</button>
+            <button id="auditNextBtn" type="button" disabled>Next</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

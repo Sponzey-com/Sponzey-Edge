@@ -1,0 +1,150 @@
+[package]
+name = "edge-memory-harness"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+edge-adapters = { path = "../../crates/edge-adapters" }
+edge-admin-api = { path = "../../crates/edge-admin-api" }
+edge-application = { path = "../../crates/edge-application" }
+edge-domain = { path = "../../crates/edge-domain" }
+edge-ports = { path = "../../crates/edge-ports" }
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "0.10.9"
+rustls = { version = "0.23.41", default-features = false, features = ["std", "ring"] }
+rustls-pki-types = "1.15.0"
+socket2 = "0.6.4"
+
+[dev-dependencies]
+rcgen = "0.14.8"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "edge-memory-sample"
+path = "src/main.rs"
+
+[[bin]]
+name = "edge-memory-evidence"
+path = "src/evidence_main.rs"
+
+[[bin]]
+name = "edge-http-memory-scenario"
+path = "src/release_http_main.rs"
+
+[[bin]]
+name = "edge-http-memory-evidence"
+path = "src/http_evidence_main.rs"
+
+[[bin]]
+name = "edge-connection-holder"
+path = "src/connection_holder_main.rs"
+
+[[bin]]
+name = "edge-admission-probe"
+path = "src/admission_probe_main.rs"
+
+[[bin]]
+name = "edge-slow-header"
+path = "src/slow_header_main.rs"
+
+[[bin]]
+name = "edge-slow-body"
+path = "src/slow_body_main.rs"
+
+[[bin]]
+name = "edge-payload-pressure"
+path = "src/payload_pressure_main.rs"
+
+[[bin]]
+name = "edge-private-https"
+path = "src/private_https_main.rs"
+
+[[bin]]
+name = "edge-tls-connection-holder"
+path = "src/tls_connection_holder_main.rs"
+
+[[bin]]
+name = "edge-mtls-connection-holder"
+path = "src/mtls_connection_holder_main.rs"
+
+[[bin]]
+name = "edge-websocket-driver"
+path = "src/websocket_driver_main.rs"
+
+[[bin]]
+name = "edge-connection-churn"
+path = "src/connection_churn_main.rs"
+
+[[bin]]
+name = "edge-slow-response"
+path = "src/slow_response_main.rs"
+
+[[bin]]
+name = "edge-control-max"
+path = "src/control_max_main.rs"
+
+[[bin]]
+name = "edge-http-steady"
+path = "src/http_steady_main.rs"
+
+[[bin]]
+name = "edge-https-steady"
+path = "src/https_steady_main.rs"
+
+[[bin]]
+name = "edge-mtls-steady"
+path = "src/mtls_steady_main.rs"
+
+[[bin]]
+name = "edge-memory-manifest"
+path = "src/memory_manifest_main.rs"
+
+[[bin]]
+name = "edge-memory-aggregate"
+path = "src/memory_aggregate_main.rs"
+
+[[bin]]
+name = "edge-slow-body-cycles"
+path = "src/slow_body_cycles_main.rs"
+
+[[bin]]
+name = "edge-slow-header-cycles"
+path = "src/slow_header_cycles_main.rs"
+
+[[bin]]
+name = "edge-slow-response-cycles"
+path = "src/slow_response_cycles_main.rs"
+
+[[bin]]
+name = "edge-websocket-cycles"
+path = "src/websocket_cycles_main.rs"
+
+[[bin]]
+name = "edge-full-profile-readiness"
+path = "src/full_profile_readiness_main.rs"
+
+[[bin]]
+name = "edge-full-profile-runner"
+path = "src/full_profile_runner_main.rs"
+
+[[bin]]
+name = "edge-diagnostic-soak"
+path = "src/diagnostic_soak_main.rs"
+
+[[bin]]
+name = "edge-diagnostic-soak-runner"
+path = "src/diagnostic_soak_runner_main.rs"
+
+[[bin]]
+name = "edge-phase011-memory-release"
+path = "src/phase011_memory_release_main.rs"
+
+[[bin]]
+name = "edge-macos-leaks-evidence"
+path = "src/macos_leaks_main.rs"

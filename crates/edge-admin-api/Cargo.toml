@@ -1,0 +1,16 @@
+[package]
+name = "edge-admin-api"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+edge-application = { path = "../edge-application" }
+edge-domain = { path = "../edge-domain" }
+edge-ports = { path = "../edge-ports" }
+serde_json.workspace = true
+
+[lib]
+path = "src/lib.rs"

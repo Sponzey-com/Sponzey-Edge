@@ -1,0 +1,23 @@
+[workspace]
+members = [
+    "apps/edge-proxy",
+    "crates/edge-admin-api",
+    "crates/edge-adapters",
+    "crates/edge-application",
+    "crates/edge-core",
+    "crates/edge-domain",
+    "crates/edge-ports",
+    "tests/integration",
+    "tests/memory-harness",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://example.invalid/sponzey-edge-proxy"
+rust-version = "1.80"
+
+[workspace.dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }

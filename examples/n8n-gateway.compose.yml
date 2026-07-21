@@ -1,0 +1,30 @@
+services:
+  edge:
+    build: ..
+    environment:
+      SPONZEY_DATA_DIR: /var/lib/sponzey-edge/data
+      SPONZEY_CONFIG_FILE: /etc/sponzey-edge/current.toml
+      SPONZEY_ADMIN_BIND: 127.0.0.1:9443
+      SPONZEY_LOG_MODE: product
+      SPONZEY_ACME_CLIENT: fake
+      SPONZEY_DEV_LISTEN: 0.0.0.0:8080
+      SPONZEY_DEV_UPSTREAM_URL: http://n8n:5678
+    ports:
+      - "8080:8080"
+    depends_on:
+      - n8n
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:8080/
+      N8N_PROXY_HOPS: 1
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:

@@ -1,0 +1,32 @@
+schema_version = 1
+
+[admin]
+bind = "127.0.0.1:9443"
+enabled = true
+
+[logging]
+mode = "product"
+
+[storage]
+data_dir = ".sponzey"
+
+[runtime]
+max_connections = 1024
+max_inflight_payload_bytes = 134217728
+
+[[listeners]]
+name = "http"
+bind = "0.0.0.0:8080"
+protocol = "http"
+
+[[services]]
+name = "example"
+
+[[services.upstreams]]
+url = "http://127.0.0.1:3000"
+
+[[routes]]
+name = "example"
+hosts = ["localhost"]
+paths = ["/"]
+service = "example"

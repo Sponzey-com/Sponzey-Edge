@@ -1,0 +1,15 @@
+services:
+  edge:
+    build: .
+    environment:
+      SPONZEY_DATA_DIR: /var/lib/sponzey-edge/data
+      SPONZEY_CONFIG_FILE: /etc/sponzey-edge/current.toml
+      SPONZEY_ADMIN_BIND: 127.0.0.1:9443
+      SPONZEY_LOG_MODE: product
+    ports:
+      - "8080:8080"
+    volumes:
+      - edge-data:/var/lib/sponzey-edge/data
+
+volumes:
+  edge-data:

@@ -1,0 +1,71 @@
+# Rust
+/target/
+**/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo keeps application lockfiles useful for reproducible builds.
+# Uncomment this only if this repository becomes a reusable Rust library.
+# Cargo.lock
+
+# Node.js / Web Admin UI
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json.tmp
+
+# Frontend build output
+dist/
+build/
+.vite/
+.next/
+.nuxt/
+.svelte-kit/
+coverage/
+
+# Package manager caches
+.npm/
+.pnpm-store/
+.yarn/
+!.yarn/releases/
+!.yarn/plugins/
+!.yarn/sdks/
+!.yarn/versions/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Sponzey Fleet local runtime
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+fleet.db
+.sponzey/
+logs/
+artifacts/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+
+RESEARCH.md
+.tasks

@@ -1,0 +1,28 @@
+[package]
+name = "edge-proxy"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+edge-adapters = { path = "../../crates/edge-adapters" }
+edge-admin-api = { path = "../../crates/edge-admin-api" }
+edge-application = { path = "../../crates/edge-application" }
+edge-core = { path = "../../crates/edge-core" }
+edge-domain = { path = "../../crates/edge-domain" }
+edge-ports = { path = "../../crates/edge-ports" }
+serde_json.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.183"
+
+[dev-dependencies]
+rcgen = "0.14.8"
+rustls = { version = "0.23.41", default-features = false, features = ["std", "ring"] }
+rustls-pki-types = "1.15.0"
+
+[[bin]]
+name = "edge-proxy"
+path = "src/main.rs"
