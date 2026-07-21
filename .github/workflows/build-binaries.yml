@@ -29,30 +29,45 @@ jobs:
             binary_path: target/release/edge-proxy
             package_name: edge-proxy-linux-x86_64.tar.gz
             package_command: tar -czf dist/edge-proxy-linux-x86_64.tar.gz -C dist edge-proxy
-          - os: macos-latest
-            artifact_name: edge-proxy-macos
+          - os: ubuntu-24.04-arm
+            artifact_name: edge-proxy-linux-arm64
             binary_name: edge-proxy
             binary_path: target/release/edge-proxy
-            package_name: edge-proxy-macos.tar.gz
-            package_command: tar -czf dist/edge-proxy-macos.tar.gz -C dist edge-proxy
+            package_name: edge-proxy-linux-arm64.tar.gz
+            package_command: tar -czf dist/edge-proxy-linux-arm64.tar.gz -C dist edge-proxy
+          - os: macos-15-intel
+            artifact_name: edge-proxy-macos-x86_64
+            binary_name: edge-proxy
+            binary_path: target/release/edge-proxy
+            package_name: edge-proxy-macos-x86_64.tar.gz
+            package_command: tar -czf dist/edge-proxy-macos-x86_64.tar.gz -C dist edge-proxy
+          - os: macos-latest
+            artifact_name: edge-proxy-macos-arm64
+            binary_name: edge-proxy
+            binary_path: target/release/edge-proxy
+            package_name: edge-proxy-macos-arm64.tar.gz
+            package_command: tar -czf dist/edge-proxy-macos-arm64.tar.gz -C dist edge-proxy
           - os: windows-latest
             artifact_name: edge-proxy-windows-x86_64
             binary_name: edge-proxy.exe
             binary_path: target/release/edge-proxy.exe
             package_name: edge-proxy-windows-x86_64.zip
-            package_command: 7z a dist/edge-proxy-windows-x86_64.zip ./dist/edge-proxy.exe
+            package_command: powershell -NoProfile -Command "Compress-Archive -Path dist/edge-proxy.exe -DestinationPath dist/edge-proxy-windows-x86_64.zip -Force"
+          - os: windows-11-arm
+            artifact_name: edge-proxy-windows-arm64
+            binary_name: edge-proxy.exe
+            binary_path: target/release/edge-proxy.exe
+            package_name: edge-proxy-windows-arm64.zip
+            package_command: powershell -NoProfile -Command "Compress-Archive -Path dist/edge-proxy.exe -DestinationPath dist/edge-proxy-windows-arm64.zip -Force"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust builds
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: ${{ matrix.artifact_name }}
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
 
       - name: Build release binary
         run: cargo build --release -p edge-proxy
